@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant Producer as Producer (Client)
+    participant Broker as Kafka Broker
+    participant Log as Topic Log
+
+    Note over Producer: Sending Message with<br>Seq Num: 101
+
+    Producer->>Broker: Produce(Msg="Item +1", PID=5, Seq=101)
+    
+    activate Broker
+    Note right of Broker: First time seeing Seq 101<br>from PID 5.
+    Broker->>Log: Append "Item +1"
+    Broker--x Producer: ACK (Lost in Network Error!)
+    deactivate Broker
+
+    Note over Producer: No ACK received.<br>Timeout triggers Retry.
+
+    Producer->>Broker: Retry: Produce(Msg="Item +1", PID=5, Seq=101)
+
+    activate Broker
+    Note right of Broker: Check Memory:<br>"I already have Seq 101 from PID 5."
+    Note right of Broker: Action: Discard Duplicate<br>but return Success.
+    Broker-->>Producer: ACK (Success)
+    deactivate Broker
+
+    Note over Producer: Send Success.<br>Result: Only 1 record in Log.

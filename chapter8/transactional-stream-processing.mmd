@@ -1,0 +1,36 @@
+flowchart TD
+    subgraph "Kafka Cluster"
+        Input[Input Topic]
+        Output[Output Topic]
+        Offsets[__consumer_offsets]
+    end
+
+    subgraph "Stream Application (Microservice)"
+        direction TB
+        
+        subgraph "Transaction Scope (All or Nothing)"
+            Read[1. Consume Event]
+            Process["2. Update Local State<br/>(Inventory Count)"]
+            Write[3. Produce Result]
+            Commit[4. Commit Offsets]
+        end
+    end
+
+    Input --> Read
+    Read --> Process
+    Process --> Write
+    Write -.->|"Buffered (Not Visible yet)"| Output
+    Process -.->|"Changes Buffered"| Commit
+    
+    Commit -->|"Atomic Write (Marker)"| Offsets
+    Commit -->|"Atomic Write (Marker)"| Output
+
+    %% Failure Case
+    Crash["⚡ Crash occurs here"]
+    Process -.- Crash
+    
+    style Crash fill:#ffcccc,stroke:#ff0000
+    
+    Note["If crash happens BEFORE step 4,<br/>the transaction acts as if<br/>Steps 1, 2, and 3 NEVER happened.<br/>(Rollback)"]
+    
+    Crash -.- Note
