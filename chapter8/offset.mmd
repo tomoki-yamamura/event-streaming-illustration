@@ -1,0 +1,26 @@
+flowchart TB
+    subgraph "Kafka Broker (Cluster)"
+        direction TB
+        InputTopic["Input Topic<br/>(Source Data)"]
+        
+        subgraph "Transaction Scope (All or Nothing)"
+            direction TB
+            OutputTopic["Output Topic<br/>(Result Data)"]
+            OffsetTopic["__consumer_offsets Topic<br/>(Read Position)"]
+        end
+    end
+
+    subgraph "Consumer / Stream App"
+        Process[Application Logic]
+    end
+
+    %% Flow
+    InputTopic --"1. Read Message (Offset: 100)"--> Process
+    Process --"2. Process Data"--> Process
+    
+    Process --"3. Write Result"--> OutputTopic
+    Process --"4. Write Offset (Commit 100)"--> OffsetTopic
+
+    Note["Crucial Point:<br/>Step 3 and Step 4 are bundled together.<br/>If the app crashes before Step 4 completes,<br/>Step 3 is also rolled back (hidden)."]
+    
+    style OffsetTopic fill:#ffeb3b,stroke:#f1c40f,color:#000

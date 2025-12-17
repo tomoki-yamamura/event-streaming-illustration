@@ -1,0 +1,19 @@
+flowchart TD
+    subgraph "Stream Timeの更新プロセス"
+        direction TB
+        
+        Event1["Event A<br/>Time: 10:00"] -->|処理| State1(("現在の<br/>Stream Time<br/>10:00"))
+        
+        State1 --> Event2["Event B<br/>Time: 10:05"]
+        Event2 -->|更新！| State2(("現在の<br/>Stream Time<br/>10:05"))
+        
+        State2 --> Event3["Event C<br/>Time: 10:02<br/>(遅れて到着)"]
+        Event3 -->|時間は戻らない！| State3(("現在の<br/>Stream Time<br/>10:05"))
+        
+        State3 --> Event4["Event D<br/>Time: 10:10"]
+        Event4 -->|更新！| State4(("現在の<br/>Stream Time<br/>10:10"))
+    end
+
+    style State2 fill:#ffeb3b,stroke:#f1c40f
+    style State3 fill:#ffeb3b,stroke:#f1c40f
+    style Event3 fill:#ffccbc,stroke:#d84315,stroke-dasharray: 5 5
