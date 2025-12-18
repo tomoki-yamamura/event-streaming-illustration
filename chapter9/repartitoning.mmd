@@ -1,0 +1,25 @@
+graph TD
+    subgraph "Input Source"
+        P0["Partition 0<br/>Harry: t=93, t=96"]
+        P1["Partition 1<br/>Harry: t=90, t=95"]
+    end
+
+    subgraph "Processing Instances (Running Independently)"
+        I0["Instance 0<br/>Current Time: t=96<br/>(Ahead)"]
+        I1["Instance 1<br/>Current Time: t=89<br/>(Behind)"]
+    end
+
+    subgraph "Output Partition"
+        Output["Harry's Partition<br/>Arrival Order"]
+    end
+
+    P0 -->|Read| I0
+    P1 -->|Read| I1
+
+    I0 --"① Sent First (t=93, 96)"--> Output
+    I1 --"② Sent Later (t=90)"--> Output
+
+    Note["Result Arrival Order:<br/>1. t=93<br/>2. t=96<br/>3. t=90 (Here! Order Reversed)"]:::bad
+    style Note fill:#ffcccc,stroke:#333,stroke-width:2px
+    
+    classDef bad fill:#f9f,stroke:#333,stroke-width:4px;

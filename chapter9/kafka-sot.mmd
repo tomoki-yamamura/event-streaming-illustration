@@ -1,0 +1,25 @@
+flowchart TD
+    User((User))
+    API["Web API (Stateless)"]
+    
+    subgraph Kafka Cluster
+        TopicCmd[("1. Command Topic<br/>(命令: WithdrawRequested)")]
+        TopicEvent[("3. Event Topic<br/>(事実: Withdrawn/Rejected)<br/>★Source of Truth")]
+    end
+
+    subgraph "Stream Processor (Kafka Streams)"
+        Processor[("Event Validator")]
+        RocksDB[("RocksDB (State Store)<br/>{UserA: 1000円}")]
+    end
+
+    User --"Withdraw 1000"--> API
+    API --"Produce"--> TopicCmd
+    
+    TopicCmd --"Consume"--> Processor
+    Processor --"Get/Put"--> RocksDB
+    Processor --"Produce Result"--> TopicEvent
+
+    Note["★ここがポイント<br/>User-Aの処理は<br/>世界でただ一つのスレッドが<br/>順番に実行する（ロック不要）"]
+
+    style TopicEvent fill:#ffecb3,stroke:#ffc107,stroke-width:2px
+    style RocksDB fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px

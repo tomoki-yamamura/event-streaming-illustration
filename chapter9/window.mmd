@@ -1,0 +1,24 @@
+sequenceDiagram
+    autonumber
+    participant Time as 時間軸
+    participant Event as イベント発生
+    participant Window as ウィンドウ集計<br>(10:00-11:00分)
+    participant Output as 下流へ出力
+
+    Event->>Window: 10:30 データ到着 (正常)
+    Event->>Window: 10:55 データ到着 (正常)
+
+    Note over Time: 11:00 (ウィンドウ終了時刻)
+
+    Window->>Output: 【出力1】結果: 2件 (速報値)
+    Note right of Output: 即座に届くが<br>不完全な可能性あり
+
+    rect rgb(255, 245, 220)
+        Note over Window: 【猶予期間】<br>ウィンドウは閉じずに<br>店じまい準備中...
+    end
+
+    Event->>Window: 11:05 遅延データ到着 (Late Event)
+    Note over Window: おっと、遅刻者が来た。<br>再計算！
+
+    Window->>Output: 【出力2】結果: 3件 (訂正版 / Update)
+    Note right of Output: データが更新される。<br>下流で上書きが必要。

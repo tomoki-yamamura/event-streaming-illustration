@@ -1,0 +1,18 @@
+graph LR
+    subgraph "Time Window"
+        Target["Aggregation Target Window<br/>10:10 - 10:20"]
+    end
+
+    Time["Current Stream Time: 10:30"]
+    
+    Limit["Grace Period Cutoff<br/>(10:30 - 5min = 10:25)"]
+    
+    E1("Event: 10:28") -->|Accept| Proc1{"Process OK"}
+    E2("Event: 10:24") -->|Drop| Proc2{"Discard 🗑️"}
+
+    Time -.-> Limit
+    
+    Note["Data older than '10:25' is<br/>no longer accepted!<br/>The window is closed!"]
+
+    style Proc2 fill:#ef9a9a,stroke:#c62828
+    style Limit fill:#b3e5fc,stroke:#03a9f4
