@@ -1,0 +1,36 @@
+flowchart TD
+    subgraph Users [ユーザー体験]
+        User((User))
+    end
+
+    subgraph LegacySystem [レガシーシステム境界]
+        FE[フロントエンド App]
+        DB[(メインDB)]
+    end
+
+    subgraph EventArchitecture [イベント駆動レイヤー]
+        Kafka[Kafka / Event Stream]
+        BPC[BPCマイクロサービス]
+        Redis[(Redis / State Store)]
+    end
+
+    %% ユーザーの動き
+    User -- 1. 商品閲覧/購入 --> FE
+    FE -- 2. ログ/イベント送信 --> Kafka
+    FE -- (同時にDBへ通常書き込み) --> DB
+
+    %% ストリーム処理
+    Kafka -- 3. イベント受信 --> BPC
+    
+    %% Redisでの計算 (ここがポイント)
+    BPC -- 4. スコア加算 (ZINCRBY) --> Redis
+    Redis -- 5. 現在のTop 10を取得 --> BPC
+
+    %% サイドカーとしてDB更新
+    BPC -- 6. ランキングテーブルをUpsert --> DB
+
+    %% 読み取り
+    FE -- 7. ランキング表示 (最新!) --> User
+
+    %% スタイル定義
+    linkStyle 2,3,4,5,6 stroke:green,stroke-width:2px,color:green;

@@ -1,0 +1,25 @@
+flowchart TD
+    subgraph Users [ユーザー体験]
+        User((User))
+    end
+
+    subgraph LegacySystem [レガシーシステム境界]
+        FE[フロントエンド App]
+        DB[(メインDB)]
+        Batch[夜間バッチ処理]
+    end
+
+    %% ユーザーの動き
+    User -- 1. 商品閲覧/購入 --> FE
+    FE -- 2. トランザクション記録 --> DB
+
+    %% バッチの動き
+    Batch -- 3. 生データを全件取得 (深夜) --> DB
+    Batch -- 4. 集計・ソート (高負荷) --> Batch
+    Batch -- 5. ランキングテーブルを全更新 --> DB
+
+    %% 読み取り
+    FE -- 6. ランキング表示 (データは古い) --> User
+    
+    %% スタイル定義
+    linkStyle 3,4,5 stroke:red,stroke-width:2px,color:red;
