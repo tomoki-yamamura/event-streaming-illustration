@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    participant Input as Input Stream
+    participant Orch as Orchestrator<br>(指揮者・State持ち)
+    participant SvcA as Service A<br>(Kafka Worker)
+    participant SaaS as SaaS Endpoint B<br>(HTTP API)
+    participant Output as Output Stream
+
+    Note over Input, Output: 【正常系】全ての処理が成功するケース
+
+    Input->>Orch: 1. トランザクション開始要求
+    Note right of Orch: State: 開始
+
+    %% Service A の処理 (Kafka)
+    rect rgb(240, 248, 255)
+        Note over Orch, SvcA: Kafka Topic (非同期)
+        Orch->>SvcA: 2. A-Command (処理して)
+        SvcA->>SvcA: (処理実行 & ローカルコミット)
+        SvcA-->>Orch: 3. A-Response (成功しました)
+    end
+    
+    Note right of Orch: State: A完了, B待機中
+
+    %% SaaS B の処理 (HTTP)
+    rect rgb(255, 250, 240)
+        Note over Orch, SaaS: HTTP Request/Response (同期)
+        Orch->>SaaS: 4. HTTP POST (処理して)
+        SaaS->>SaaS: (外部システムで処理)
+        SaaS-->>Orch: 5. HTTP 200 OK (成功しました)
+    end
+
+    Note right of Orch: State: 全完了
+
+    Orch->>Output: 6. 結果出力 (成功)

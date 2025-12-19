@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    %% participant設定は上と同じ
+    participant Input as Input Stream
+    participant Orch as Orchestrator<br>(指揮者・State持ち)
+    participant SvcA as Service A<br>(Kafka Worker)
+    participant SaaS as SaaS Endpoint B<br>(HTTP API)
+    participant Output as Output Stream
+
+    Note over Input, Output: 【異常系】図10-10の状況 (Bが失敗→Aをロールバック)
+
+    Input->>Orch: トランザクション開始
+
+    %% Step 1: Aは成功する
+    rect rgb(240, 248, 255)
+        Orch->>SvcA: A-Command (処理して)
+        SvcA-->>Orch: A-Response (成功しました)
+        Note right of Orch: State: A完了。次はB。
+    end
+
+    %% Step 2: Bが失敗する
+    rect rgb(255, 245, 245)
+        Orch->>SaaS: HTTP Request (処理して)
+        Note right of SaaS: ❌エラー発生！<br>(コミット失敗)
+        SaaS-->>Orch: 1) Response: 失敗 (HTTP 500)
+    end
+
+    Note right of Orch: 2) Update State:<br>「B失敗。Aの取り消しが必要」
+
+    %% Step 3: 指揮者がAに「取り消し」を命じる
+    rect rgb(255, 230, 230)
+        Note over Orch, SvcA: 【重要】補償トランザクションの発行
+        Orch->>SvcA: 3) Do rollback (さっきの取り消して！)
+        
+        Note right of SvcA: 4) Do rollback:<br>在庫を戻す、返金するなど<br>逆の操作を実行
+
+        SvcA-->>Orch: 5) Rollback complete (取り消し完了)
+    end
+
+    Note right of Orch: 6) Update State:<br>全ロールバック完了。結果は「失敗」。
+
+    Orch->>Output: 7) 結果出力 (失敗)

@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant Time as 時間経過
+    participant Upstream as 上流サービス
+    participant Kafka as Kafka (Topic)
+    participant Consumer as Consumer (アプリ)
+
+    Note over Time, Consumer: 【ケース1: リアルタイム処理 (Near-Real-Time)】<br>上流での遅延が「遅刻」を生む
+
+    Upstream->>Upstream: 処理失敗 & リトライ (5分ロス)
+    
+    rect rgb(200, 200, 200)
+        Note right of Consumer: ConsumerのWatermarkは<br>待たずに進む (t=100 -> t=105)
+    end
+    
+    Upstream->>Kafka: イベント送信 (本来はt=100のデータ)
+    Kafka->>Consumer: 受信 (現在時刻 t=105)
+    
+    Note right of Consumer: 「t=100のデータ？<br>もうt=105だから遅延(Late)として破棄！」<br>❌ 処理されない
+
+    %% 分割線
+    Note over Time, Consumer: ==============================
+
+    Note over Time, Consumer: 【ケース2: 再処理 (Reprocessing)】<br>データは既に揃っている
+
+    Note over Kafka: Log: [t=99] [t=100] [t=101] ...<br>(遅れて届いたデータも格納済み)
+
+    Consumer->>Kafka: オフセット0から読み直し開始
+    Kafka->>Consumer: [t=99] を取得
+    Note right of Consumer: 現在のStream Time = 99
+
+    Kafka->>Consumer: [t=100] を取得
+    Note right of Consumer: 現在のStream Time = 99<br>イベント(t=100)は未来なので<br>正常(On-time)として処理！<br>⭕️ 処理される
