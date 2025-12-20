@@ -1,0 +1,53 @@
+graph TD
+    %% --- Left Side: Driver Mode ---
+    subgraph DM ["Option 1: Driver Mode<br/>(Microservice Friendly)"]
+        
+        subgraph Client_DM ["Client Environment / CMS<br/>(e.g., Kubernetes Pod)"]
+            Driver["Driver Program<br/>(The 'Brain' & Main App)<br/>Running here"]
+        end
+        
+        subgraph Cluster_DM ["Heavyweight Cluster<br/>(Spark / Flink)"]
+            Worker1_DM[Worker]
+            Worker2_DM[Worker]
+        end
+
+        %% Connections
+        Driver -- "1. Request Resources" --> Cluster_DM
+        Driver -- "2. Send Tasks & Logs" --> Worker1_DM
+        Driver -- "2. Send Tasks & Logs" --> Worker2_DM
+        
+        %% Lifecycle Note
+        style Driver fill:#d4f1f4,stroke:#333,stroke-width:2px
+        Link_DM["Lifecycle Linked:<br/>If you kill the Driver Pod,<br/>the whole job stops."]
+        Driver -.-> Link_DM
+    end
+
+    %% --- Right Side: Cluster Mode ---
+    subgraph CM ["Option 2: Cluster Mode<br/>(Fire-and-Forget)"]
+        
+        subgraph Client_CM ["Client Environment / CMS<br/>(e.g., Laptop / Jenkins)"]
+            Submitter["Submission Client<br/>(Temporary)"]
+        end
+        
+        subgraph Cluster_CM ["Heavyweight Cluster<br/>(Spark / Flink)"]
+            Manager[Cluster Manager]
+            InternalDriver["Driver Program<br/>(The 'Brain')<br/>Running INSIDE Cluster"]
+            Worker1_CM[Worker]
+            Worker2_CM[Worker]
+        end
+
+        %% Connections
+        Submitter -- "1. Submit Job & Exit" --> Manager
+        Manager -- "2. Spawns Driver" --> InternalDriver
+        InternalDriver --> Worker1_CM
+        InternalDriver --> Worker2_CM
+
+        %% Lifecycle Note
+        style InternalDriver fill:#ffcccb,stroke:#333,stroke-width:2px
+        Link_CM["Lifecycle Detached:<br/>Client disconnects.<br/>Job keeps running.<br/>Need API to stop it."]
+        Submitter -.-> Link_CM
+    end
+
+    %% Styling
+    style DM fill:#fff,stroke:#333
+    style CM fill:#fff,stroke:#333

@@ -1,0 +1,21 @@
+graph LR
+    Input --> GoApp["Go App (Ingest Only)"]
+    GoApp -->|Kafka| FlinkCluster["Flink Cluster"]
+    
+    subgraph "Flink Cluster (Separate Large Infrastructure)"
+        JM[JobManager]
+        TM1[TaskManager 1]
+        TM2[TaskManager 2]
+        ZK[ZooKeeper]
+        JM --> TM1
+        JM --> TM2
+        ZK -.-> JM
+    end
+    
+    FlinkCluster -->|Emit| Output
+    
+    style Input fill:#fff,stroke:#333
+    style Output fill:#fff,stroke:#333
+    style JM fill:#ff9,stroke:#333
+    style TM1 fill:#ccf,stroke:#333
+    style TM2 fill:#ccf,stroke:#333
