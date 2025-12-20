@@ -1,0 +1,40 @@
+graph TD
+    %% Roles defined based on text
+    Dev["Developer<br/>Writes the application code"]
+    
+    subgraph "Management Layer"
+        ZK["ZooKeeper Cluster<br/>Role: Coordination & Consensus.<br/>It decides which Resource Manager is the leader."]
+        
+        RM1["Resource Manager 0 (Leader)<br/>Role: The 'Boss'.<br/>Assigns tasks to workers.<br/>Does NOT process data itself."]
+        RM2["Resource Manager 1 (Backup)<br/>Standby in case leader fails."]
+    end
+
+    subgraph "Physical Worker Nodes (The 'Heavy Lifting')"
+        W1["Worker Node 0<br/>(Physical Server CPU/RAM)"]
+        W2["Worker Node 1<br/>(Physical Server CPU/RAM)"]
+        
+        subgraph "RAM inside Worker 0"
+            T1["Task / Executor<br/>(Running your code)"]
+            Buf1["Window Buffer<br/>Holds data for User 1-100"]
+            T1 -- manages --> Buf1
+        end
+        
+        subgraph "RAM inside Worker 1"
+            T2["Task / Executor<br/>(Running your code)"]
+            Buf2["Window Buffer<br/>Holds data for User 101-200"]
+            T2 -- manages --> Buf2
+        end
+    end
+
+    %% Connections
+    Dev -->|Submits Job| RM1
+    ZK -.->|Elects Leader / Monitors health| RM1
+    ZK -.->|Monitors health| RM2
+    
+    RM1 -->|Assigns Tasks| W1
+    RM1 -->|Assigns Tasks| W2
+
+    style ZK fill:#ffcccb,stroke:#333,color:black
+    style RM1 fill:#ffffcc,stroke:#333,color:black
+    style Buf1 fill:#ccf,stroke:#333,color:black
+    style Buf2 fill:#ccf,stroke:#333,color:black
