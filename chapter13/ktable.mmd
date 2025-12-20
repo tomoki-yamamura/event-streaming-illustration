@@ -1,0 +1,17 @@
+graph LR
+    subgraph "AWS Fargate (Your App)"
+        subgraph "Java Container"
+            App["Business Logic"]
+            Lib["Kafka Streams Lib<br/>(KTable / Join Logic)"]
+            
+            App <-->|"Memory Collaboration"| Lib
+        end
+    end
+
+    subgraph "MSK / Confluent Cloud"
+        Kafka["Kafka Broker"]
+    end
+
+    Lib <-->|Read/Write| Kafka
+    
+    style Lib fill:#d4f1f4,stroke:#333

@@ -1,0 +1,30 @@
+graph TD
+    subgraph "Kafka Cluster (Storage)"
+        T1["Input Topic<br/>Key: ProductID<br/>Partitions: 2"]
+        
+        T_Internal["Internal Topic (Shuffle)<br/>Key: BrandID<br/>Partitions: 2"]
+    end
+
+    subgraph "Your Microservices (Fargate Tasks)"
+        subgraph "Instance A"
+            TaskA1["Task 1 (Producer)<br/>1. Read Product<br/>2. Set Key = BrandID<br/>3. Write to Internal"]
+            TaskA2["Task 2 (Consumer)<br/>4. Read from Internal<br/>5. Aggregate (Sum)"]
+        end
+
+        subgraph "Instance B"
+            TaskB1["Task 1 (Producer)<br/>Similar logic"]
+            TaskB2["Task 2 (Consumer)<br/>Similar logic"]
+        end
+    end
+
+    %% Flow
+    T1 --> TaskA1
+    T1 --> TaskB1
+    
+    TaskA1 -->|Shuffle: Write| T_Internal
+    TaskB1 -->|Shuffle: Write| T_Internal
+    
+    T_Internal -->|Read Sorted Data| TaskA2
+    T_Internal -->|Read Sorted Data| TaskB2
+
+    style T_Internal fill:#ffcccb,stroke:#333

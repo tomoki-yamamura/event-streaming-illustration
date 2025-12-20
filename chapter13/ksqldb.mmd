@@ -1,0 +1,21 @@
+graph LR
+    subgraph "AWS Fargate (Your App)"
+        subgraph "Go Container"
+            GoApp["Business Logic<br/>(Stateless)"]
+        end
+    end
+
+    subgraph "AWS Fargate (Middleware)"
+        subgraph "ksqlDB Container"
+            KSQL["ksqlDB Server<br/>(KTable / Join Logic)"]
+        end
+    end
+
+    subgraph "MSK / Confluent Cloud"
+        Kafka["Kafka Broker"]
+    end
+
+    GoApp <-->|Read Result| Kafka
+    KSQL <-->|Read/Process/Write| Kafka
+    
+    style KSQL fill:#ffcccb,stroke:#333
