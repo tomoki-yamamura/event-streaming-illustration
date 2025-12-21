@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant Client as Consumer (Client)<br/>CPU: Sleep 💤
+    participant Server as Broker (Server)
+    
+    Note over Client, Server: Behavior when no data available
+
+    Client->>Server: Any data?<br/>(Wait 500ms if none)
+    
+    rect rgb(200, 230, 255)
+        Note left of Client: [Blocking I/O]<br/>No response yet, so<br/>thread stops and sleeps<br/>(CPU usage 0%)
+        Note right of Server: [Long Polling]<br/>Wait until data arrives<br/>holding response
+        
+        Note over Server: ... waiting ...
+        Note over Server: ... (300ms elapsed) ...
+        Note over Server: ✨ Data arrived!
+    end
+    
+    Server-->>Client: Data found! (Response)
+    
+    Note left of Client: Wake up!<br/>Start processing 🔥
